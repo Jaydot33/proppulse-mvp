@@ -23,4 +23,4 @@ COPY . .
 EXPOSE 5000
 
 # Start uvicorn (honors $PORT at runtime)
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-5000}
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
