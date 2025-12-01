@@ -1,11 +1,10 @@
 import streamlit as st
 import requests
 import os
-import pandas as pd  # For better data viz if needed
 
 st.set_page_config(page_title="PropPulse", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS for HQ look (dark theme, pulse animation, Montserrat-like fonts)
+# Custom CSS for HQ look (dark theme, pulse animation)
 st.markdown("""
 <style>
     .main {background-color: #001F3F; color: #7FDBFF;}
@@ -56,7 +55,7 @@ for i, prop in enumerate(props[:6]):
     with cols[i % 2]:
         icon = "🔴" if prop.get('risk_score', 0) > 10 else "🟢"
         st.metric(
-            label=f"{icon} {prop['player']} {prop['prop'].title()}",
+            label=f"{icon} {prop.get('player', 'Unknown')} {prop.get('prop', 'Prop').title()}",
             value=f"{prop.get('line', 0)}",
             delta=f"{prop.get('adjusted_prob', 0):.1f}% Adj. Prob"
         )
@@ -72,6 +71,7 @@ st.header("🔍 Arb Opportunities")
 if st.button("Scan for Arbs"):
     st.info("No arbs detected—check back soon! (VIP: Full scan + alerts)")
     # Placeholder pie for sentiment (use pd for demo)
+    import pandas as pd
     demo_data = pd.DataFrame({'Sentiment': ['Positive', 'Negative'], 'Value': [60, 40]})
     st.bar_chart(demo_data.set_index('Sentiment'))
 
