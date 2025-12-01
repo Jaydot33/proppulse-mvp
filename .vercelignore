@@ -1,0 +1,8 @@
+# Exclude dev tools/large dirs
+.git
+__pycache__
+*.pyc
+.env
+node_modules  # If any frontend bleed
+.devcontainer
+frontend.py  # If not needed for API
