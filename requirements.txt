@@ -2,5 +2,13 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 redis==5.0.1
 requests==2.31.0
-vaderSentiment==3.3.2  # Tiny sentiment scorer
+pydantic==2.5.0
+transformers==4.35.0
+torch==2.2.0  # CPU-light for Vercel/Railway
+pandas==2.1.4
+numpy==1.24.3
+streamlit==1.36.0  # Responsive + confetti support
+plotly==5.17.0
+altair==5.1.2
+streamlit-confetti==0.0.2
 python-dotenv==1.0.0
