@@ -1,15 +1,33 @@
 {
   "version": 2,
   "builds": [
-    { "src": "main.py", "use": "@vercel/python" },
-    { "src": "app.py", "use": "@vercel/python" }
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
+    }
   ],
   "functions": {
-    "main.py": { "maxDuration": 30, "memory": 2048 }
+    "main.py": {
+      "maxDuration": 30,
+      "memory": 2048
+    }
   },
   "routes": [
-    { "src": "/api/(.*)", "dest": "main.py" },
-    { "src": "/dashboard/(.*)", "dest": "app.py" },
-    { "src": "/", "dest": "/dashboard" }  // NEW: Root to frontend
+    {
+      "src": "/api/(.*)",
+      "dest": "main.py"
+    },
+    {
+      "src": "/dashboard/(.*)",
+      "dest": "app.py"
+    },
+    {
+      "src": "/",
+      "dest": "/dashboard"
+    }
   ]
 }
