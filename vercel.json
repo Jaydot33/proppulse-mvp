@@ -3,11 +3,17 @@
   "builds": [
     {
       "src": "main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "installCommand": "pip install -r requirements-backend.txt"
+      }
     },
     {
-      "src": "app.py",
-      "use": "@vercel/python"
+      "src": "frontend.py",
+      "use": "@vercel/python",
+      "config": {
+        "installCommand": "pip install -r requirements.txt"
+      }
     }
   ],
   "functions": {
@@ -23,7 +29,7 @@
     },
     {
       "src": "/dashboard/(.*)",
-      "dest": "app.py"
+      "dest": "frontend.py"
     },
     {
       "src": "/",
