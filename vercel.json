@@ -3,13 +3,24 @@
   "builds": [
     {
       "src": "main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.12"
+      }
     },
     {
       "src": "app.py",
       "use": "@vercel/python"
     }
   ],
+  "functions": {
+    "main.py": {
+      "runtime": "python3.12-fluid",  // NEW: Fluid Compute for Python (Q4 2025)
+      "maxDuration": 30,  // 30s for cold ML loads (Pro default 10s)
+      "memory": 2048      // 2GB for torch (Pro allows 4GB)
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
@@ -23,8 +34,5 @@
       "src": "/(.*)",
       "dest": "/dashboard"
     }
-  ],
-  "env": {
-    "PYTHON_VERSION": "3.12"
-  }
+  ]
 }
