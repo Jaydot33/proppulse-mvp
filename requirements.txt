@@ -1,23 +1,15 @@
-# Frontend
-streamlit==1.40.1
+streamlit==1.40.0
 plotly==5.24.1
 altair==5.3.0
-
-# Data Processing - Python 3.13 compatible
-pandas==2.2.3
-numpy==2.0.0
-
-# Backend (if still needed for FastAPI integration)
-fastapi==0.115.0
-uvicorn[standard]==0.30.0
-mangum==0.18.0
-redis==5.1.0
+pandas==2.2.2
+numpy==1.26.4
 requests==2.32.3
-pydantic==2.9.2
-
-# ML/NLP (optional - remove if not used)
-transformers==4.47.0
-torch==2.4.1
-
-# Utilities
 python-dotenv==1.0.1
+transformers==4.45.1
+torch==2.4.1 --index-url https://download.pytorch.org/whl/cpu
+uvicorn[standard]==0.30.6
+fastapi==0.115.0
+mangum==0.17.0
+redis==5.0.8
+pydantic==2.9.2
+streamlit-confetti==0.1.0  # Latest available
