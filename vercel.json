@@ -2,19 +2,29 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.py",
+      "src": "main.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "app.py",
       "use": "@vercel/python"
     }
   ],
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 30
-    }
-  },
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "main.py"
+    },
+    {
+      "src": "/dashboard/(.*)",
+      "dest": "app.py"
+    },
+    {
       "src": "/(.*)",
-      "dest": "api/index.py"
+      "dest": "/dashboard"
     }
-  ]
+  ],
+  "env": {
+    "PYTHON_VERSION": "3.12"
+  }
 }
