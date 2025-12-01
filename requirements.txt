@@ -1,11 +1,11 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-mangum==0.17.0  # NEW: ASGI adapter for Vercel Lambda
+mangum==0.17.0
 redis==5.0.1
 requests==2.31.0
 pydantic==2.5.0
 transformers==4.35.0
-torch==2.1.2+cpu  # CPU-only, slimmer for cold starts
+torch==2.1.2+cpu  # Slim CPU; cold start fix
 pandas==2.1.4
 numpy==1.24.3
 streamlit==1.36.0
