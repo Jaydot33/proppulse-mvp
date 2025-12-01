@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
-from transformers import pipeline  # For sentiment
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer  # Lightweight sentiment replacement
 import asyncio  # For async if needed
 
 # Configure logging
@@ -18,7 +18,13 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="PropPulse API", version="1.0.0")
 
 # CORS for frontend
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 # Redis
 try:
@@ -44,27 +50,33 @@ class Prop(BaseModel):
     risk_score: float
     tweets: List[Dict]
 
-# Lazy sentiment pipeline
-sentiment_pipeline = None
-def get_sentiment_pipeline():
-    global sentiment_pipeline
-    if sentiment_pipeline is None:
-        sentiment_pipeline = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
-    return sentiment_pipeline
+# Lazy sentiment analyzer (VADER - tiny & fast)
+analyzer = None
+
+def get_sentiment_analyzer():
+    global analyzer
+    if analyzer is None:
+        analyzer = SentimentIntensityAnalyzer()
+    return analyzer
 
 def fetch_odds(sport_key: str) -> Optional[List[Dict]]:
     """Fetch odds from API, cache in Redis"""
     cache_key = f"odds:{sport_key}"
     if r and r.exists(cache_key):
         return json.loads(r.get(cache_key))
-
     try:
         url = f"{BASE_URL}/sports/{sport_key}/odds/"
-        params = {"apiKey": ODDS_API_KEY, "regions": "us", "markets": "player_points,player_rebounds,player_assists", "oddsFormat": "decimal"}
+        params = {
+            "apiKey": ODDS_API_KEY,
+            "regions": "us",
+            "markets": "player_points,player_rebounds,player_assists",
+            "oddsFormat": "decimal"
+        }
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        if r: r.setex(cache_key, 300, json.dumps(data))  # 5min cache
+        if r:
+            r.setex(cache_key, 300, json.dumps(data))  # 5min cache
         return data
     except Exception as e:
         logger.error(f"Fetch odds error: {e}")
@@ -74,7 +86,6 @@ def get_injury_tweets(player: str) -> Dict:
     """Pull X tweets, score sentiment for risk (sync version)"""
     if not X_BEARER_TOKEN:
         return {"risk_score": 0, "tweets": []}
-
     try:
         headers = {"Authorization": f"Bearer {X_BEARER_TOKEN}"}
         url = "https://api.twitter.com/2/tweets/search/recent"
@@ -86,14 +97,13 @@ def get_injury_tweets(player: str) -> Dict:
         resp = requests.get(url, headers=headers, params=params, timeout=10)
         resp.raise_for_status()
         tweets = resp.json().get('data', [])
-
         sentiments = []
-        pipeline = get_sentiment_pipeline()
+        analyzer = get_sentiment_analyzer()
         for t in tweets:
-            score = pipeline(t['text'])[0]
-            neg_score = score['score'] if score['label'] == 'NEGATIVE' else 0
+            score = analyzer.polarity_scores(t['text'])
+            # VADER compound is -1 (neg) to +1 (pos); map neg to 0-1 risk
+            neg_score = max(0, -score['compound'])  # Inverted for injury risk
             sentiments.append({'text': t['text'][:100], 'score': neg_score})
-
         risk = sum(s['score'] for s in sentiments) / max(1, len(sentiments))
         return {'risk_score': round(risk * 100, 1), 'tweets': sentiments}
     except Exception as e:
@@ -129,7 +139,6 @@ async def get_nba_props():
     odds_data = fetch_odds("basketball_nba")
     if not odds_data:
         raise HTTPException(500, "Failed to fetch odds")
-
     props = []
     for event in odds_data[:5]:  # Top 5 games
         for bookmaker in event.get('bookmakers', []):
@@ -138,11 +147,9 @@ async def get_nba_props():
                     player_name = market['outcomes'][0]['name'].split(' - ')[0]  # e.g., "LeBron James"
                     line = float(market['outcomes'][0]['point'])
                     odds = {bookmaker['title']: {o['name'].lower(): o['price'] for o in market['outcomes']}}
-
                     tweets = get_injury_tweets(player_name)
                     base_prob = 50  # Dummy baseline (replace with historical API later)
                     adjusted = base_prob - tweets['risk_score']
-
                     props.append(Prop(
                         player=player_name,
                         prop=market['key'],
@@ -153,14 +160,13 @@ async def get_nba_props():
                         tweets=tweets['tweets']
                     ))
                     break  # One prop per player for MVP
-
     # Cache props
-    if r: r.setex("nba_props", 300, json.dumps([p.dict() for p in props]))
-
+    if r:
+        r.setex("nba_props", 300, json.dumps([p.dict() for p in props]))
     # Add arbs
     arbs = detect_prop_arb([p.dict() for p in props])
-    if arbs: logger.info(f"Found {len(arbs)} arb ops")
-
+    if arbs:
+        logger.info(f"Found {len(arbs)} arb ops")
     return props[:10]  # Limit
 
 @app.get("/ncaab/props", response_model=List[Prop])
@@ -169,7 +175,6 @@ async def get_ncaab_props():
     odds_data = fetch_odds("basketball_ncaab")
     if not odds_data:
         raise HTTPException(500, "Failed to fetch odds")
-
     props = []
     for event in odds_data[:5]:  # Top 5 games
         for bookmaker in event.get('bookmakers', []):
@@ -178,11 +183,9 @@ async def get_ncaab_props():
                     player_name = market['outcomes'][0]['name'].split(' - ')[0]
                     line = float(market['outcomes'][0]['point'])
                     odds = {bookmaker['title']: {o['name'].lower(): o['price'] for o in market['outcomes']}}
-
                     tweets = get_injury_tweets(player_name)
                     base_prob = 50
                     adjusted = base_prob - tweets['risk_score']
-
                     props.append(Prop(
                         player=player_name,
                         prop=market['key'],
@@ -193,8 +196,8 @@ async def get_ncaab_props():
                         tweets=tweets['tweets']
                     ))
                     break
-
-    if r: r.setex("ncaab_props", 300, json.dumps([p.dict() for p in props]))
+    if r:
+        r.setex("ncaab_props", 300, json.dumps([p.dict() for p in props]))
     return props[:10]
 
 @app.post("/alert")
