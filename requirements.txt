@@ -1,13 +1,14 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+mangum==0.17.0  # NEW: ASGI adapter for Vercel Lambda
 redis==5.0.1
 requests==2.31.0
 pydantic==2.5.0
 transformers==4.35.0
-torch==2.2.0  # CPU-light for Vercel/Railway
+torch==2.1.2+cpu  # CPU-only, slimmer for cold starts
 pandas==2.1.4
 numpy==1.24.3
-streamlit==1.36.0  # Responsive + confetti support
+streamlit==1.36.0
 plotly==5.17.0
 altair==5.1.2
 streamlit-confetti==0.0.2
